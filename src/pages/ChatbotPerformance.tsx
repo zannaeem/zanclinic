@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import MetricCard from '@/components/MetricCard';
 import { 
   MessageSquare, 
@@ -12,67 +11,99 @@ import {
   Zap
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { aiPerformanceAPI, AIPerformanceMetrics } from '@/lib/api';
+import { RefreshCw } from 'lucide-react';
+
+const CLIENT_ID = 'demo_clinic'; // Replace with dynamic client id if needed
 
 const ChatbotPerformance = () => {
+  const [metrics, setMetrics] = useState<AIPerformanceMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    aiPerformanceAPI.getPerformanceMetrics(CLIENT_ID)
+      .then(setMetrics)
+      .catch((err) => setError(err.message || 'Failed to load data'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="h-8 w-8 animate-spin text-green-600" />
+        <span className="ml-2 text-gray-600">Loading AI performance data...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <HelpCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading data</h3>
+        <p className="text-gray-600">{error}</p>
+      </div>
+    );
+  }
+
+  if (!metrics || metrics.total_conversations === 0) {
+    return (
+      <div className="text-center py-12">
+        <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No AI Performance Data</h3>
+        <p className="text-gray-600">No AI performance data available yet.</p>
+      </div>
+    );
+  }
+
+  // Prepare metrics for cards
   const chatbotMetrics = [
     {
       title: 'Total Conversations',
-      value: '5,678',
-      change: '+15% from last week',
+      value: metrics.total_conversations.toLocaleString(),
+      change: '',
       changeType: 'positive' as const,
       icon: MessageSquare,
       description: 'WhatsApp & Website chats'
     },
     {
       title: 'FAQs Resolved',
-      value: '4,123',
-      change: '+22% from last week',
+      value: metrics.top_questions.reduce((acc, q) => acc + (q.resolved_rate >= 90 ? q.count : 0), 0).toLocaleString(),
+      change: '',
       changeType: 'positive' as const,
       icon: CheckCircle,
       description: 'Automated resolutions'
     },
     {
       title: 'Response Time',
-      value: '1.2s',
-      change: '-0.3s improvement',
+      value: metrics.avg_response_time.toFixed(1) + 's',
+      change: '',
       changeType: 'positive' as const,
       icon: Clock,
       description: 'Average response speed'
     },
     {
       title: 'Booking Conversions',
-      value: '32%',
-      change: '+5% from last week',
+      value: metrics.booking_conversion_rate.toFixed(1) + '%',
+      change: '',
       changeType: 'positive' as const,
       icon: TrendingUp,
       description: 'Chat to appointment rate'
     }
   ];
 
-  const topQuestions = [
-    { question: 'What are your operating hours?', count: 245, resolved: '98%' },
-    { question: 'How to book an appointment?', count: 198, resolved: '95%' },
-    { question: 'What services do you offer?', count: 167, resolved: '92%' },
-    { question: 'Where is your clinic located?', count: 143, resolved: '100%' },
-    { question: 'Do you accept insurance?', count: 128, resolved: '88%' }
-  ];
+  // Prepare language stats
+  const totalLang = Object.values(metrics.language_distribution).reduce((a, b) => a + b, 0) || 1;
+  const languageStats = Object.entries(metrics.language_distribution).map(([language, count]) => ({
+    language,
+    percentage: Math.round((count / totalLang) * 100),
+    conversations: count
+  }));
 
-  const languageStats = [
-    { language: 'English', percentage: 68, conversations: 3856 },
-    { language: 'Malay', percentage: 32, conversations: 1822 }
-  ];
-
-  const hourlyActivity = [
-    { hour: '09:00', conversations: 45 },
-    { hour: '10:00', conversations: 62 },
-    { hour: '11:00', conversations: 78 },
-    { hour: '12:00', conversations: 34 },
-    { hour: '13:00', conversations: 28 },
-    { hour: '14:00', conversations: 89 },
-    { hour: '15:00', conversations: 92 },
-    { hour: '16:00', conversations: 67 },
-    { hour: '17:00', conversations: 45 }
-  ];
+  // Prepare hourly activity
+  const hourlyActivity = metrics.hourly_activity;
 
   return (
     <div className="space-y-8">
@@ -110,15 +141,15 @@ const ChatbotPerformance = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {topQuestions.map((item, index) => (
+              {metrics.top_questions.map((item, index) => (
                 <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-gray-50/50 hover:bg-gray-100/50 transition-colors">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900 mb-1">{item.question}</p>
                     <div className="flex items-center space-x-4 text-xs text-gray-500">
                       <span>{item.count} times asked</span>
                       <span className="flex items-center space-x-1">
-                        <div className={`w-2 h-2 rounded-full ${parseInt(item.resolved) >= 95 ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                        <span>{item.resolved} resolved</span>
+                        <div className={`w-2 h-2 rounded-full ${item.resolved_rate >= 95 ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                        <span>{item.resolved_rate.toFixed(0)}% resolved</span>
                       </span>
                     </div>
                   </div>

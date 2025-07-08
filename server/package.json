@@ -1,0 +1,29 @@
+{
+  "name": "zanclinic-webhook-server",
+  "version": "1.0.0",
+  "description": "Webhook server for n8n integration with ZanSocial Clinic",
+  "main": "webhook-server.js",
+  "scripts": {
+    "start": "node webhook-server.js",
+    "dev": "nodemon webhook-server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "@supabase/supabase-js": "^2.38.4",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "webhook",
+    "n8n",
+    "supabase",
+    "clinic",
+    "ai-performance"
+  ],
+  "author": "ZanSocial Clinic",
+  "license": "MIT"
+} 

@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import MetricCard from '@/components/MetricCard';
 import { 
   Users, 
@@ -12,42 +11,59 @@ import {
   Phone
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { aiPerformanceAPI, AIPerformanceMetrics } from '@/lib/api';
+import { RefreshCw, HelpCircle } from 'lucide-react';
+
+const CLIENT_ID = 'demo_clinic'; // Replace with dynamic client id if needed
 
 const Dashboard = () => {
-  const metrics = [
+  const [metrics, setMetrics] = useState<AIPerformanceMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    aiPerformanceAPI.getPerformanceMetrics(CLIENT_ID)
+      .then(setMetrics)
+      .catch((err) => setError(err.message || 'Failed to load data'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Main metrics for dashboard
+  const dashboardMetrics = metrics ? [
     {
       title: 'Total Patient Inquiries',
-      value: '2,847',
-      change: '+12% from last month',
+      value: metrics.total_conversations.toLocaleString(),
+      change: '',
       changeType: 'positive' as const,
       icon: Users,
       description: 'WhatsApp + Website inquiries'
     },
     {
       title: 'Appointments Booked',
-      value: '1,234',
-      change: '+8% from last month',
+      value: '-', // You can fetch real appointment data if available
+      change: '',
       changeType: 'positive' as const,
       icon: Calendar,
       description: 'Automated + Manual bookings'
     },
     {
       title: 'Chatbot Conversations',
-      value: '5,678',
-      change: '+15% from last month',
+      value: metrics.total_conversations.toLocaleString(),
+      change: '',
       changeType: 'positive' as const,
       icon: MessageSquare,
       description: 'AI-handled conversations'
     },
     {
       title: 'Conversion Rate',
-      value: '43.3%',
-      change: '+2.1% from last month',
+      value: metrics.booking_conversion_rate.toFixed(1) + '%',
+      change: '',
       changeType: 'positive' as const,
       icon: TrendingUp,
       description: 'Inquiry to appointment rate'
     }
-  ];
+  ] : [];
 
   const recentActivity = [
     { time: '2 mins ago', action: 'New WhatsApp booking', patient: 'Sarah M.', status: 'confirmed' },
@@ -62,6 +78,25 @@ const Dashboard = () => {
     { service: 'Booking System', status: 'online', uptime: '99.8%' },
     { service: 'SMS Notifications', status: 'maintenance', uptime: '98.2%' }
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="h-8 w-8 animate-spin text-green-600" />
+        <span className="ml-2 text-gray-600">Loading dashboard data...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <HelpCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading data</h3>
+        <p className="text-gray-600">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -81,7 +116,7 @@ const Dashboard = () => {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((metric, index) => (
+        {dashboardMetrics.map((metric, index) => (
           <MetricCard key={index} {...metric} />
         ))}
       </div>
