@@ -132,9 +132,6 @@ const Appointments = () => {
         prev.map(app => String(app.id) === String(id) ? { ...app, status } : app)
       );
 
-      // Optionally, re-fetch in background
-      fetchAppointments();
-
       // Close dialog
       setOpenDialogId(null);
 
@@ -143,6 +140,10 @@ const Appointments = () => {
         description: `Appointment status changed to ${status}`,
         variant: "default",
       });
+
+      // Optionally, re-fetch after a short delay
+      setTimeout(() => fetchAppointments(), 1500);
+
     } catch (error: any) {
       toast({
         title: "Update Failed",
