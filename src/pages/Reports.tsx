@@ -124,7 +124,7 @@ const Reports = () => {
       });
 
       // Language Breakdown Table
-      let langY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 150;
+      let langY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : 150;
       doc.setFontSize(14);
       doc.text('Language Breakdown', 14, langY);
       autoTable(doc, {
@@ -134,7 +134,7 @@ const Reports = () => {
       });
 
       // Summary
-      let summaryY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 200;
+      let summaryY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : 200;
       doc.setFontSize(14);
       doc.text('Summary & Insights', 14, summaryY);
       doc.setFontSize(12);
