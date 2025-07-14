@@ -67,6 +67,7 @@ const Appointments = () => {
     additional_notes: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [openDialogId, setOpenDialogId] = useState<string | null>(null);
 
   // Move fetchAppointments outside useEffect
   const fetchAppointments = async () => {
@@ -120,6 +121,8 @@ const Appointments = () => {
       });
       // Refresh appointments after update
       await fetchAppointments();
+      // Close dialog
+      setOpenDialogId(null);
     } catch (error) {
       console.error('Error updating status:', error);
       toast({
@@ -410,7 +413,7 @@ const Appointments = () => {
                       {appointment.status === 'cancelled' && 'Cancelled'}
                     </Badge>
                     {/* Only show View button in the list */}
-                    <Dialog>
+                    <Dialog open={openDialogId === appointment.id} onOpenChange={open => setOpenDialogId(open ? appointment.id : null)}>
                       <DialogTrigger asChild>
                         <Button size="sm" variant="outline" className="text-blue-600 border-blue-300" title="View Appointment Details">
                           <Eye className="h-4 w-4 mr-1" /> View
