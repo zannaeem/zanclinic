@@ -428,7 +428,7 @@ const Appointments = () => {
                           <div><strong>Date:</strong> {appointment.preferred_date || appointment.date}</div>
                           <div><strong>Time:</strong> {appointment.preferred_time || appointment.time}</div>
                           <div><strong>Notes:</strong> {appointment.additional_notes}</div>
-                          <div><strong>Status:</strong> {appointment.status}</div>
+                          <div><strong>Status:</strong> {appointment.status === 'pending' && 'Pending'}{appointment.status === 'confirmed' && 'Approved'}{appointment.status === 'cancelled' && 'Cancelled'}</div>
                         </div>
                         {/* Show WhatsApp, Approve/Cancel in dialog if still pending */}
                         {appointment.status === 'pending' && (
