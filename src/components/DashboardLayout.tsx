@@ -54,10 +54,10 @@ const DashboardLayout = () => {
           <div className="flex items-center justify-between p-6 border-b border-gray-200/50">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">Z</span>
+                <span className="text-white font-bold text-sm">KS</span>
               </div>
               <div>
-                <h1 className="text-lg font-semibold gradient-text">ZanSocial</h1>
+                <h1 className="text-lg font-semibold gradient-text">Klinik Subha</h1>
                 <p className="text-xs text-gray-500">Clinic AI Dashboard</p>
               </div>
             </div>
@@ -102,7 +102,7 @@ const DashboardLayout = () => {
                 <span className="text-white text-sm font-medium">DC</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">Dr. Chen's Clinic</p>
+                <p className="text-sm font-medium text-gray-900 truncate">Klinik Subha</p>
                 <p className="text-xs text-gray-500 truncate">Admin</p>
               </div>
             </div>
@@ -127,7 +127,7 @@ const DashboardLayout = () => {
             <div className="flex items-center space-x-4">
               <div className="hidden sm:block">
                 <p className="text-sm text-gray-500">Welcome back,</p>
-                <p className="font-semibold text-gray-900">Dr. Chen's Clinic</p>
+                <p className="font-semibold text-gray-900">Klinik Subha</p>
               </div>
               
               <div className="flex items-center space-x-2">

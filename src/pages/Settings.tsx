@@ -29,7 +29,7 @@ const Settings = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="clinicName">Clinic Name</Label>
-                  <Input id="clinicName" defaultValue="Dr. Chen's Clinic" />
+                  <Input id="clinicName" defaultValue="Klinik Subha" />
                 </div>
                 <div>
                   <Label htmlFor="contactPerson">Contact Person</Label>

@@ -95,7 +95,7 @@ const Reports = () => {
       const doc = new jsPDF();
       // Cover page
       doc.setFontSize(20);
-      doc.text('ZanSocial Clinic', 14, 20);
+      doc.text('Klinik Subha', 14, 20);
       doc.setFontSize(16);
       doc.text('Monthly Performance Report', 14, 32);
       doc.setFontSize(12);
@@ -208,7 +208,7 @@ const Reports = () => {
       // Generate PDF (same as before)
       const doc = new jsPDF();
       doc.setFontSize(20);
-      doc.text('ZanSocial Clinic', 14, 20);
+      doc.text('Klinik Subha', 14, 20);
       doc.setFontSize(16);
       doc.text('Weekly Chatbot Analytics', 14, 32);
       doc.setFontSize(12);

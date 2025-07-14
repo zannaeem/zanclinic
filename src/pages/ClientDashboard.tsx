@@ -17,7 +17,7 @@ import {
 const ClientDashboard = () => {
   const { clientId } = useParams<{ clientId: string }>();
   const [searchParams] = useSearchParams();
-  const clientName = searchParams.get('name') || 'Your Clinic';
+  const clientName = searchParams.get('name') || 'Klinik Subha';
   const isAuthenticated = searchParams.get('auth') === 'true';
 
   if (!clientId) {
@@ -52,7 +52,7 @@ const ClientDashboard = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">AI Performance Dashboard</h1>
-                <p className="text-sm text-gray-600">Powered by ZanSocial Clinic</p>
+                <p className="text-sm text-gray-600">Powered by Klinik Subha</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -111,7 +111,7 @@ const ClientDashboard = () => {
         <div className="mt-12 pt-8 border-t border-gray-200">
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              © 2024 ZanSocial Clinic. AI Performance Dashboard powered by advanced analytics.
+              © 2024 Klinik Subha. AI Performance Dashboard powered by advanced analytics.
             </p>
             <div className="flex items-center justify-center space-x-6 mt-4">
               <div className="flex items-center space-x-2 text-sm text-gray-500">

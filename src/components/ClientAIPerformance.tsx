@@ -26,7 +26,7 @@ interface ClientAIPerformanceProps {
 
 const ClientAIPerformance: React.FC<ClientAIPerformanceProps> = ({ 
   clientId, 
-  clientName = "Your Clinic",
+  clientName = "Klinik Subha",
   isPublic = false 
 }) => {
   const [metrics, setMetrics] = useState<AIPerformanceMetrics | null>(null);
