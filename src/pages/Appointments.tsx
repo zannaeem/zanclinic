@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -69,6 +69,10 @@ const Appointments = () => {
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [openDialogId, setOpenDialogId] = useState<string | null>(null);
+
+  // Add state for selected appointment
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   // Fetch appointments
   const fetchAppointments = async () => {
@@ -137,37 +141,22 @@ const Appointments = () => {
     }
   };
 
+  // Approve/Cancel handlers
   const handleUpdateStatus = async (id: string, status: string) => {
+    setUpdating(true);
     try {
       const { error } = await supabase
         .from('appointments')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', id);
-
       if (error) throw error;
-
-      // Update local state immediately
-      setAppointments(prev =>
-        prev.map(app => String(app.id) === String(id) ? { ...app, status } : app)
-      );
-
-      // Close dialog
-      setOpenDialogId(null);
-
-      toast({
-        title: "Status Updated!",
-        description: `Appointment status changed to ${getStatusLabel(status)}`,
-        variant: "default",
-      });
-
-      // No delayed fetch needed; realtime will update UI
-
+      setAppointments(prev => prev.map(app => String(app.id) === String(id) ? { ...app, status } : app));
+      toast({ title: 'Status Updated!', description: `Appointment status changed to ${getStatusLabel(status)}` });
+      setSelectedAppointment(null);
     } catch (error: any) {
-      toast({
-        title: "Update Failed",
-        description: error.message || "There was an error updating the appointment status. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: 'Update Failed', description: error.message || 'Error updating appointment.', variant: 'destructive' });
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -315,7 +304,7 @@ const Appointments = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge className={getStatusColor(appointment.status)}>{getStatusLabel(appointment.status)}</Badge>
-                      <Button size="sm" variant="outline" onClick={() => setOpenDialogId(appointment.id)}>View</Button>
+                      <Button size="sm" variant="outline" onClick={() => setSelectedAppointment(appointment)}>View</Button>
                     </div>
                   </div>
                 ))}
@@ -324,6 +313,33 @@ const Appointments = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Appointment Details Modal */}
+      <Dialog open={!!selectedAppointment} onOpenChange={open => setSelectedAppointment(open ? selectedAppointment : null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Appointment Details</DialogTitle>
+          </DialogHeader>
+          {selectedAppointment && (
+            <div className="space-y-2">
+              <p><strong>Name:</strong> {selectedAppointment.patient_name || 'N/A'}</p>
+              <p><strong>Service:</strong> {selectedAppointment.service_type || 'N/A'}</p>
+              <p><strong>Date:</strong> {selectedAppointment.preferred_date || 'N/A'}</p>
+              <p><strong>Time:</strong> {selectedAppointment.preferred_time || 'N/A'}</p>
+              <p><strong>Phone:</strong> {selectedAppointment.patient_phone || 'N/A'}</p>
+              <p><strong>IC/Email:</strong> {selectedAppointment.patient_ic || 'N/A'}</p>
+              <p><strong>Notes:</strong> {selectedAppointment.additional_notes || 'N/A'}</p>
+              <p><strong>Status:</strong> {getStatusLabel(selectedAppointment.status) || 'N/A'}</p>
+              <p><strong>Submitted:</strong> {selectedAppointment.created_at ? new Date(selectedAppointment.created_at).toLocaleString() : 'N/A'}</p>
+            </div>
+          )}
+          <DialogFooter className="flex gap-2 mt-4">
+            <Button disabled={updating || !selectedAppointment || selectedAppointment.status === 'confirmed'} variant="default" onClick={() => handleUpdateStatus(selectedAppointment.id, 'confirmed')}>Approve</Button>
+            <Button disabled={updating || !selectedAppointment || selectedAppointment.status === 'cancelled'} variant="destructive" onClick={() => handleUpdateStatus(selectedAppointment.id, 'cancelled')}>Cancel</Button>
+            <Button variant="outline" onClick={() => setSelectedAppointment(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
