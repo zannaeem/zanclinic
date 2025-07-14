@@ -141,8 +141,8 @@ const Appointments = () => {
         variant: "default",
       });
 
-      // Optionally, re-fetch after a short delay
-      setTimeout(() => fetchAppointments(), 1500);
+      // Optionally, re-fetch after a longer delay
+      setTimeout(() => fetchAppointments(), 5000);
 
     } catch (error: any) {
       toast({
