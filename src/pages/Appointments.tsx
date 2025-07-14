@@ -119,8 +119,13 @@ const Appointments = () => {
         description: `Appointment status changed to ${status}`,
         variant: "default",
       });
-      // Update local state immediately
+      // Update local state immediately with backend status value
       setAppointments(prev => prev.map(appt => appt.id === id ? { ...appt, status } : appt));
+      // Debug: log the updated status
+      setTimeout(() => {
+        const updated = appointments.find(appt => appt.id === id);
+        if (updated) console.log('Updated appointment status:', updated.status);
+      }, 100);
       // Close dialog
       setOpenDialogId(null);
       // Optionally, still re-fetch in background
@@ -410,7 +415,7 @@ const Appointments = () => {
                   </div>
                   <div className="flex items-center space-x-3">
                     <Badge className={getStatusColor(appointment.status)}>
-                      {appointment.status === 'pending' ? 'Pending' : appointment.status === 'confirmed' ? 'Approved' : appointment.status === 'cancelled' ? 'Cancelled' : appointment.status}
+                      {appointment.status === 'pending' ? 'Pending' : appointment.status === 'confirmed' ? 'Confirmed' : appointment.status === 'cancelled' ? 'Cancelled' : appointment.status}
                     </Badge>
                     {/* Only show View button in the list */}
                     <Dialog open={openDialogId === appointment.id} onOpenChange={open => setOpenDialogId(open ? appointment.id : null)}>
@@ -431,7 +436,7 @@ const Appointments = () => {
                           <div><strong>Date:</strong> {appointment.preferred_date || appointment.date}</div>
                           <div><strong>Time:</strong> {appointment.preferred_time || appointment.time}</div>
                           <div><strong>Notes:</strong> {appointment.additional_notes}</div>
-                          <div><strong>Status:</strong> {appointment.status === 'pending' ? 'Pending' : appointment.status === 'confirmed' ? 'Approved' : appointment.status === 'cancelled' ? 'Cancelled' : appointment.status}</div>
+                          <div><strong>Status:</strong> {appointment.status === 'pending' ? 'Pending' : appointment.status === 'confirmed' ? 'Confirmed' : appointment.status === 'cancelled' ? 'Cancelled' : appointment.status}</div>
                         </div>
                         {/* Show WhatsApp, Approve/Cancel in dialog if still pending */}
                         {appointment.status === 'pending' && (
