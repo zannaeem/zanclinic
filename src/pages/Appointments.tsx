@@ -405,7 +405,9 @@ const Appointments = () => {
                   </div>
                   <div className="flex items-center space-x-3">
                     <Badge className={getStatusColor(appointment.status)}>
-                      {appointment.status}
+                      {appointment.status === 'pending' && 'Pending'}
+                      {appointment.status === 'confirmed' && 'Approved'}
+                      {appointment.status === 'cancelled' && 'Cancelled'}
                     </Badge>
                     {/* Only show View button in the list */}
                     <Dialog>
