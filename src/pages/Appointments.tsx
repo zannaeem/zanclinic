@@ -87,7 +87,17 @@ const Appointments = () => {
   // Filter appointments for the selected date
   const todayStr = formatDate(selectedDate, 'yyyy-MM-dd');
   const todaysAppointments = appointments.filter(
-    (appt) => appt.preferred_date === todayStr
+    (appt) => {
+      const match = appt.preferred_date === todayStr;
+      console.log('Filter:', {
+        id: appt.id,
+        status: appt.status,
+        preferred_date: appt.preferred_date,
+        todayStr,
+        match
+      });
+      return match;
+    }
   );
 
   const getStatusColor = (status: string) => {
