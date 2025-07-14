@@ -119,10 +119,12 @@ const Appointments = () => {
         description: `Appointment status changed to ${status}`,
         variant: "default",
       });
-      // Refresh appointments after update
-      await fetchAppointments();
+      // Update local state immediately
+      setAppointments(prev => prev.map(appt => appt.id === id ? { ...appt, status } : appt));
       // Close dialog
       setOpenDialogId(null);
+      // Optionally, still re-fetch in background
+      fetchAppointments();
     } catch (error) {
       console.error('Error updating status:', error);
       toast({
