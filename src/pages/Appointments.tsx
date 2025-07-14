@@ -11,6 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { format as formatDate, parse } from 'date-fns';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+
+// Helper functions for date range filtering
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 
 const FILTERS = [
   { label: 'All', value: 'all' },
@@ -61,23 +65,12 @@ function getStatusLabel(status: string) {
 const Appointments = () => {
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [appointments, setAppointments] = useState<any[]>([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({
-    patient_name: '',
-    patient_phone: '',
-    patient_ic: '',
-    service_type: '',
-    preferred_date: '',
-    preferred_time: '',
-    additional_notes: '',
-  });
-  const [submitting, setSubmitting] = useState(false);
   const [openDialogId, setOpenDialogId] = useState<string | null>(null);
 
-  // Move fetchAppointments outside useEffect
+  // Fetch appointments
   const fetchAppointments = async () => {
     setLoading(true);
     let query = supabase.from('appointments').select('*');
@@ -104,28 +97,27 @@ const Appointments = () => {
         }
       )
       .subscribe();
-
-    // Cleanup on unmount
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
 
-  // Filter appointments for the selected date
+  // Date range filters
+  const today = new Date();
   const todayStr = formatDate(selectedDate, 'yyyy-MM-dd');
-  const todaysAppointments = appointments.filter(
-    (appt) => {
-      const match = appt.preferred_date === todayStr;
-      console.log('Filter:', {
-        id: appt.id,
-        status: appt.status,
-        preferred_date: appt.preferred_date,
-        todayStr,
-        match
-      });
-      return match;
-    }
-  );
+  const weekStart = formatDate(startOfWeek(today, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const weekEnd = formatDate(endOfWeek(today, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const monthStart = formatDate(startOfMonth(today), 'yyyy-MM-dd');
+  const monthEnd = formatDate(endOfMonth(today), 'yyyy-MM-dd');
+
+  const todayAppointments = appointments.filter(a => a.preferred_date === todayStr);
+  const weekAppointments = appointments.filter(a => a.preferred_date >= weekStart && a.preferred_date <= weekEnd);
+  const monthAppointments = appointments.filter(a => a.preferred_date >= monthStart && a.preferred_date <= monthEnd);
+
+  // Summary counts
+  const confirmedCount = todayAppointments.filter(a => a.status === 'confirmed').length;
+  const pendingCount = todayAppointments.filter(a => a.status === 'pending').length;
+  const whatsappCount = todayAppointments.filter(a => a.source === 'whatsapp').length;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -180,134 +172,158 @@ const Appointments = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Appointments</h1>
-      <div className="flex justify-between items-center mb-4">
-        <Button onClick={() => setViewMode('calendar')} className={`mr-2 ${viewMode === 'calendar' ? 'bg-blue-500 text-white' : ''}`}>
-          <Calendar className="mr-2" /> Calendar
-        </Button>
-        <Button onClick={() => setViewMode('list')} className={`mr-2 ${viewMode === 'list' ? 'bg-blue-500 text-white' : ''}`}>
-          <List className="mr-2" /> List
-        </Button>
-        <Select onValueChange={(value) => setFilter(value)} value={filter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter appointments" />
-          </SelectTrigger>
-          <SelectContent>
-            {FILTERS.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center p-6">
+            <Calendar className="h-6 w-6 text-green-600 mb-2" />
+            <div className="text-2xl font-bold">{todayAppointments.length}</div>
+            <div className="text-gray-600">Today's Appointments</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center p-6">
+            <Check className="h-6 w-6 text-blue-600 mb-2" />
+            <div className="text-2xl font-bold">{confirmedCount}</div>
+            <div className="text-gray-600">Confirmed</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center p-6">
+            <Clock className="h-6 w-6 text-yellow-600 mb-2" />
+            <div className="text-2xl font-bold">{pendingCount}</div>
+            <div className="text-gray-600">Pending</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center p-6">
+            <MessageSquare className="h-6 w-6 text-green-600 mb-2" />
+            <div className="text-2xl font-bold">{whatsappCount}</div>
+            <div className="text-gray-600">Via WhatsApp</div>
+          </CardContent>
+        </Card>
       </div>
 
-      {viewMode === 'calendar' && (
-        <CalendarComponent
-          mode="single"
-          selected={selectedDate}
-          onSelect={(date) => setSelectedDate(date || new Date())}
-          className="rounded-md border"
-        />
-      )}
+      {/* Appointment Bookers by Period */}
+      <div className="mb-6">
+        <Tabs defaultValue="today" className="w-full">
+          <TabsList className="mb-2">
+            <TabsTrigger value="today">Today</TabsTrigger>
+            <TabsTrigger value="week">This Week</TabsTrigger>
+            <TabsTrigger value="month">This Month</TabsTrigger>
+          </TabsList>
+          <TabsContent value="today">
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <h3 className="font-semibold mb-2">Today's Bookers</h3>
+              {todayAppointments.length === 0 ? (
+                <p className="text-gray-500 text-sm">No appointments booked today.</p>
+              ) : (
+                <ul className="list-disc pl-5">
+                  {todayAppointments.map(a => (
+                    <li key={a.id} className="mb-1">{a.patient_name} <span className="text-xs text-gray-400">({a.service_type})</span></li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </TabsContent>
+          <TabsContent value="week">
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <h3 className="font-semibold mb-2">This Week's Bookers</h3>
+              {weekAppointments.length === 0 ? (
+                <p className="text-gray-500 text-sm">No appointments booked this week.</p>
+              ) : (
+                <ul className="list-disc pl-5">
+                  {weekAppointments.map(a => (
+                    <li key={a.id} className="mb-1">{a.patient_name} <span className="text-xs text-gray-400">({a.service_type})</span> <span className="text-xs text-gray-400">{a.preferred_date}</span></li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </TabsContent>
+          <TabsContent value="month">
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <h3 className="font-semibold mb-2">This Month's Bookers</h3>
+              {monthAppointments.length === 0 ? (
+                <p className="text-gray-500 text-sm">No appointments booked this month.</p>
+              ) : (
+                <ul className="list-disc pl-5">
+                  {monthAppointments.map(a => (
+                    <li key={a.id} className="mb-1">{a.patient_name} <span className="text-xs text-gray-400">({a.service_type})</span> <span className="text-xs text-gray-400">{a.preferred_date}</span></li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
 
-      {viewMode === 'list' && (
-        <div className="grid gap-4">
-          {loading ? (
-            <p>Loading appointments...</p>
-          ) : todaysAppointments.length === 0 ? (
-            <p>No appointments for today.</p>
-          ) : (
-            todaysAppointments.map((appointment) => (
-              <Card key={appointment.id}>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{appointment.patient_name}</CardTitle>
-                    <p className="text-sm text-gray-600">{appointment.service_type}</p>
-                    <p className="text-sm text-gray-600">
-                      {formatDate(parse(appointment.preferred_date, 'yyyy-MM-dd', new Date()), 'MMM dd, HH:mm')}
-                    </p>
-                  </div>
-                  <Badge className={getStatusColor(appointment.status)}>
-                    {getStatusLabel(appointment.status)}
-                  </Badge>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-800">{appointment.additional_notes}</p>
-                  <p className="text-sm text-gray-600">
-                    Source: {appointment.source}
-                    {appointment.source === 'whatsapp' && (
-                      <WhatsAppIcon className="ml-2 inline-block h-4 w-4 text-green-600" />
-                    )}
-                  </p>
-                  <div className="flex items-center mt-2 text-gray-600 text-sm">
-                    <User className="h-4 w-4 mr-1" />
-                    {appointment.patient_name}
-                  </div>
-                  <div className="flex items-center text-gray-600 text-sm">
-                    <Phone className="h-4 w-4 mr-1" />
-                    {appointment.patient_phone}
-                  </div>
-                  <div className="flex items-center text-gray-600 text-sm">
-                    <MessageSquare className="h-4 w-4 mr-1" />
-                    {appointment.source === 'whatsapp' && (
-                      <a href={`https://wa.me/${appointment.patient_phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="underline">
-                        WhatsApp
-                      </a>
-                    )}
-                  </div>
-                  <div className="flex items-center text-gray-600 text-sm">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {appointment.preferred_date} at {appointment.preferred_time}
-                  </div>
-                  <div className="flex items-center text-gray-600 text-sm">
-                    <Clock className="h-4 w-4 mr-1" />
-                    {appointment.created_at && formatDate(parse(appointment.created_at, 'yyyy-MM-dd HH:mm:ss', new Date()), 'MMM dd, HH:mm')}
-                  </div>
-                  <div className="flex items-center text-gray-600 text-sm">
-                    <Eye className="h-4 w-4 mr-1" />
-                    {appointment.updated_at && formatDate(parse(appointment.updated_at, 'yyyy-MM-dd HH:mm:ss', new Date()), 'MMM dd, HH:mm')}
-                  </div>
-                  <div className="flex items-center mt-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setOpenDialogId(appointment.id)}
-                      className="mr-2"
-                    >
-                      <Check className="h-4 w-4 mr-1" /> Update Status
-                    </Button>
-                    <Dialog open={openDialogId === appointment.id} onOpenChange={(open) => setOpenDialogId(open ? appointment.id : null)}>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Update Appointment Status for {appointment.patient_name}</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="status" className="text-right">
-                              Status:
-                            </Label>
-                            <Select onValueChange={(value) => handleUpdateStatus(appointment.id, value)} value={appointment.status}>
-                              <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="confirmed">Confirmed</SelectItem>
-                                <SelectItem value="cancelled">Cancelled</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+      {/* Filters and New Appointment Button */}
+      <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
+        <div className="flex gap-2">
+          <Button variant={filter === 'website' ? 'default' : 'outline'} onClick={() => setFilter('website')}>Website</Button>
+          <Button variant={filter === 'whatsapp' ? 'default' : 'outline'} onClick={() => setFilter('whatsapp')}>WhatsApp</Button>
+          <Button variant={filter === 'all' ? 'default' : 'outline'} onClick={() => setFilter('all')}>All</Button>
         </div>
-      )}
+        <Button className="flex items-center" variant="default">
+          <Plus className="h-4 w-4 mr-2" /> New Appointment
+        </Button>
+      </div>
+
+      {/* Main Content: Calendar and Today's Schedule */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Calendar */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle>Calendar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CalendarComponent
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => setSelectedDate(date || new Date())}
+              className="rounded-md border"
+            />
+            <div className="mt-2 text-sm text-gray-600">
+              Selected: {formatDate(selectedDate, 'MMM dd, yyyy')}
+              <br />
+              {todayAppointments.length} appointments scheduled
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Today's Schedule */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Today's Schedule</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <p>Loading appointments...</p>
+            ) : todayAppointments.length === 0 ? (
+              <p>No appointments for today.</p>
+            ) : (
+              <div className="space-y-4">
+                {todayAppointments.map((appointment) => (
+                  <div key={appointment.id} className="flex items-center justify-between p-4 rounded-lg bg-gray-50/50 hover:bg-gray-100/50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="text-lg font-bold text-green-700">{appointment.preferred_time}</div>
+                      <div>
+                        <div className="font-semibold">{appointment.patient_name}</div>
+                        <div className="text-xs text-gray-500">{appointment.service_type}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className={getStatusColor(appointment.status)}>{getStatusLabel(appointment.status)}</Badge>
+                      <Button size="sm" variant="outline" onClick={() => setOpenDialogId(appointment.id)}>View</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
