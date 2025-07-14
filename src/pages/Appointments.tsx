@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Clock, User, Phone, MessageSquare, Plus, Filter, Check, X as XIcon, Eye } from 'lucide-react';
+import { Calendar, Clock, User, Phone, MessageSquare, Plus, Filter, Check, X as XIcon, Eye, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -277,7 +277,7 @@ const Appointments = () => {
                     >
                       <Check className="h-4 w-4 mr-1" /> Update Status
                     </Button>
-                    <Dialog open={openDialogId === appointment.id} onOpenChange={setOpenDialogId}>
+                    <Dialog open={openDialogId === appointment.id} onOpenChange={(open) => setOpenDialogId(open ? appointment.id : null)}>
                       <DialogContent>
                         <DialogHeader>
                           <DialogTitle>Update Appointment Status for {appointment.patient_name}</DialogTitle>
