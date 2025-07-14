@@ -172,4 +172,144 @@ const Appointments = () => {
 
     } catch (error: any) {
       toast({
-        title
+        title: "Update Failed",
+        description: error.message || "There was an error updating the appointment status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Appointments</h1>
+      <div className="flex justify-between items-center mb-4">
+        <Button onClick={() => setViewMode('calendar')} className={`mr-2 ${viewMode === 'calendar' ? 'bg-blue-500 text-white' : ''}`}>
+          <Calendar className="mr-2" /> Calendar
+        </Button>
+        <Button onClick={() => setViewMode('list')} className={`mr-2 ${viewMode === 'list' ? 'bg-blue-500 text-white' : ''}`}>
+          <List className="mr-2" /> List
+        </Button>
+        <Select onValueChange={(value) => setFilter(value)} value={filter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter appointments" />
+          </SelectTrigger>
+          <SelectContent>
+            {FILTERS.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {viewMode === 'calendar' && (
+        <CalendarComponent
+          mode="single"
+          selected={selectedDate}
+          onSelect={(date) => setSelectedDate(date || new Date())}
+          className="rounded-md border"
+        />
+      )}
+
+      {viewMode === 'list' && (
+        <div className="grid gap-4">
+          {loading ? (
+            <p>Loading appointments...</p>
+          ) : todaysAppointments.length === 0 ? (
+            <p>No appointments for today.</p>
+          ) : (
+            todaysAppointments.map((appointment) => (
+              <Card key={appointment.id}>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg">{appointment.patient_name}</CardTitle>
+                    <p className="text-sm text-gray-600">{appointment.service_type}</p>
+                    <p className="text-sm text-gray-600">
+                      {formatDate(parse(appointment.preferred_date, 'yyyy-MM-dd', new Date()), 'MMM dd, HH:mm')}
+                    </p>
+                  </div>
+                  <Badge className={getStatusColor(appointment.status)}>
+                    {getStatusLabel(appointment.status)}
+                  </Badge>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-800">{appointment.additional_notes}</p>
+                  <p className="text-sm text-gray-600">
+                    Source: {appointment.source}
+                    {appointment.source === 'whatsapp' && (
+                      <WhatsAppIcon className="ml-2 inline-block h-4 w-4 text-green-600" />
+                    )}
+                  </p>
+                  <div className="flex items-center mt-2 text-gray-600 text-sm">
+                    <User className="h-4 w-4 mr-1" />
+                    {appointment.patient_name}
+                  </div>
+                  <div className="flex items-center text-gray-600 text-sm">
+                    <Phone className="h-4 w-4 mr-1" />
+                    {appointment.patient_phone}
+                  </div>
+                  <div className="flex items-center text-gray-600 text-sm">
+                    <MessageSquare className="h-4 w-4 mr-1" />
+                    {appointment.source === 'whatsapp' && (
+                      <a href={`https://wa.me/${appointment.patient_phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="underline">
+                        WhatsApp
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex items-center text-gray-600 text-sm">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    {appointment.preferred_date} at {appointment.preferred_time}
+                  </div>
+                  <div className="flex items-center text-gray-600 text-sm">
+                    <Clock className="h-4 w-4 mr-1" />
+                    {appointment.created_at && formatDate(parse(appointment.created_at, 'yyyy-MM-dd HH:mm:ss', new Date()), 'MMM dd, HH:mm')}
+                  </div>
+                  <div className="flex items-center text-gray-600 text-sm">
+                    <Eye className="h-4 w-4 mr-1" />
+                    {appointment.updated_at && formatDate(parse(appointment.updated_at, 'yyyy-MM-dd HH:mm:ss', new Date()), 'MMM dd, HH:mm')}
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setOpenDialogId(appointment.id)}
+                      className="mr-2"
+                    >
+                      <Check className="h-4 w-4 mr-1" /> Update Status
+                    </Button>
+                    <Dialog open={openDialogId === appointment.id} onOpenChange={setOpenDialogId}>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Update Appointment Status for {appointment.patient_name}</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="status" className="text-right">
+                              Status:
+                            </Label>
+                            <Select onValueChange={(value) => handleUpdateStatus(appointment.id, value)} value={appointment.status}>
+                              <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="confirmed">Confirmed</SelectItem>
+                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Appointments;
