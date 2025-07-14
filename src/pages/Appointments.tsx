@@ -398,77 +398,80 @@ const Appointments = () => {
                 <div className="text-center text-gray-500">Loading...</div>
               ) : todaysAppointments.length === 0 ? (
                 <div className="text-center text-gray-500">No appointments for this date.</div>
-              ) : todaysAppointments.map((appointment) => (
-                <div key={appointment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-green-600">{appointment.preferred_time || appointment.time}</div>
-                      <div className="text-xs text-gray-500">{appointment.service_type || appointment.type}</div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h3 className="font-semibold">{appointment.patient_name || appointment.patientName}</h3>
-                        {getSourceIcon(appointment.source)}
+              ) : todaysAppointments.map((appointment) => {
+                console.log('Appointment:', appointment.id, 'Status:', appointment.status);
+                return (
+                  <div key={appointment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center space-x-4">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-green-600">{appointment.preferred_time || appointment.time}</div>
+                        <div className="text-xs text-gray-500">{appointment.service_type || appointment.type}</div>
                       </div>
-                      <p className="text-sm text-gray-600">{appointment.additional_notes}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h3 className="font-semibold">{appointment.patient_name || appointment.patientName}</h3>
+                          {getSourceIcon(appointment.source)}
+                        </div>
+                        <p className="text-sm text-gray-600">{appointment.additional_notes}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Badge className={getStatusColor(appointment.status)}>
+                        {appointment.status === 'pending' ? 'Pending' : appointment.status === 'confirmed' ? 'Confirmed' : appointment.status === 'cancelled' ? 'Cancelled' : appointment.status}
+                      </Badge>
+                      {/* Only show View button in the list */}
+                      <Dialog open={openDialogId === appointment.id} onOpenChange={open => setOpenDialogId(open ? appointment.id : null)}>
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="outline" className="text-blue-600 border-blue-300" title="View Appointment Details">
+                            <Eye className="h-4 w-4 mr-1" /> View
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Appointment Details</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-2">
+                            <div><strong>Patient Name:</strong> {appointment.patient_name || appointment.patientName}</div>
+                            <div><strong>Phone:</strong> {appointment.patient_phone || appointment.phone}</div>
+                            <div><strong>IC:</strong> {appointment.patient_ic || appointment.patient_ic_email}</div>
+                            <div><strong>Service Type:</strong> {appointment.service_type || appointment.type}</div>
+                            <div><strong>Date:</strong> {appointment.preferred_date || appointment.date}</div>
+                            <div><strong>Time:</strong> {appointment.preferred_time || appointment.time}</div>
+                            <div><strong>Notes:</strong> {appointment.additional_notes}</div>
+                            <div><strong>Status:</strong> {appointment.status === 'pending' ? 'Pending' : appointment.status === 'confirmed' ? 'Confirmed' : appointment.status === 'cancelled' ? 'Cancelled' : appointment.status}</div>
+                          </div>
+                          {/* Show WhatsApp, Approve/Cancel in dialog if still pending */}
+                          {appointment.status === 'pending' && (
+                            <div className="flex space-x-2 mt-4">
+                              <Button
+                                size="sm"
+                                className="bg-[#25D366] hover:bg-[#1ebe57] text-white p-2 rounded-full shadow-none border-none"
+                                asChild
+                              >
+                                <a
+                                  href={`https://wa.me/${(appointment.patient_phone || appointment.phone || '').replace(/^0/, '60').replace(/[^\d]/g, '')}?text=${encodeURIComponent(getWhatsAppMessage(appointment) || '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Send WhatsApp Message"
+                                  className="inline-flex items-center"
+                                >
+                                  <WhatsAppIcon width={20} height={20} />
+                                </a>
+                              </Button>
+                              <Button size="sm" className="bg-blue-500 hover:bg-blue-600 text-white" onClick={() => handleUpdateStatus(appointment.id, 'confirmed')}>
+                                <Check className="h-4 w-4 mr-1" /> Approve
+                              </Button>
+                              <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white" onClick={() => handleUpdateStatus(appointment.id, 'cancelled')}>
+                                <XIcon className="h-4 w-4 mr-1" /> Cancel
+                              </Button>
+                            </div>
+                          )}
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <Badge className={getStatusColor(appointment.status)}>
-                      {appointment.status === 'pending' ? 'Pending' : appointment.status === 'confirmed' ? 'Confirmed' : appointment.status === 'cancelled' ? 'Cancelled' : appointment.status}
-                    </Badge>
-                    {/* Only show View button in the list */}
-                    <Dialog open={openDialogId === appointment.id} onOpenChange={open => setOpenDialogId(open ? appointment.id : null)}>
-                      <DialogTrigger asChild>
-                        <Button size="sm" variant="outline" className="text-blue-600 border-blue-300" title="View Appointment Details">
-                          <Eye className="h-4 w-4 mr-1" /> View
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Appointment Details</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-2">
-                          <div><strong>Patient Name:</strong> {appointment.patient_name || appointment.patientName}</div>
-                          <div><strong>Phone:</strong> {appointment.patient_phone || appointment.phone}</div>
-                          <div><strong>IC:</strong> {appointment.patient_ic || appointment.patient_ic_email}</div>
-                          <div><strong>Service Type:</strong> {appointment.service_type || appointment.type}</div>
-                          <div><strong>Date:</strong> {appointment.preferred_date || appointment.date}</div>
-                          <div><strong>Time:</strong> {appointment.preferred_time || appointment.time}</div>
-                          <div><strong>Notes:</strong> {appointment.additional_notes}</div>
-                          <div><strong>Status:</strong> {appointment.status === 'pending' ? 'Pending' : appointment.status === 'confirmed' ? 'Confirmed' : appointment.status === 'cancelled' ? 'Cancelled' : appointment.status}</div>
-                        </div>
-                        {/* Show WhatsApp, Approve/Cancel in dialog if still pending */}
-                        {appointment.status === 'pending' && (
-                          <div className="flex space-x-2 mt-4">
-                            <Button
-                              size="sm"
-                              className="bg-[#25D366] hover:bg-[#1ebe57] text-white p-2 rounded-full shadow-none border-none"
-                              asChild
-                            >
-                              <a
-                                href={`https://wa.me/${(appointment.patient_phone || appointment.phone || '').replace(/^0/, '60').replace(/[^\d]/g, '')}?text=${encodeURIComponent(getWhatsAppMessage(appointment) || '')}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title="Send WhatsApp Message"
-                                className="inline-flex items-center"
-                              >
-                                <WhatsAppIcon width={20} height={20} />
-                              </a>
-                            </Button>
-                            <Button size="sm" className="bg-blue-500 hover:bg-blue-600 text-white" onClick={() => handleUpdateStatus(appointment.id, 'confirmed')}>
-                              <Check className="h-4 w-4 mr-1" /> Approve
-                            </Button>
-                            <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white" onClick={() => handleUpdateStatus(appointment.id, 'cancelled')}>
-                              <XIcon className="h-4 w-4 mr-1" /> Cancel
-                            </Button>
-                          </div>
-                        )}
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
