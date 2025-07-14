@@ -110,28 +110,30 @@ const Appointments = () => {
 
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
-      const { error } = await supabase.from('appointments').update({ status }).eq('id', id);
-      if (error) {
-        throw error;
-      }
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state immediately
+      setAppointments(prev =>
+        prev.map(app => String(app.id) === String(id) ? { ...app, status } : app)
+      );
+
+      // Optionally, re-fetch in background
+      fetchAppointments();
+
+      // Close dialog
+      setOpenDialogId(null);
+
       toast({
         title: "Status Updated!",
         description: `Appointment status changed to ${status}`,
         variant: "default",
       });
-      // Update local state immediately with backend status value
-      setAppointments(prev => prev.map(appt => String(appt.id) === String(id) ? { ...appt, status: status === 'confirmed' ? 'confirmed' : status } : appt));
-      // Debug: log the updated status
-      setTimeout(() => {
-        const updated = appointments.find(appt => appt.id === id);
-        if (updated) console.log('Updated appointment status:', updated.status);
-      }, 100);
-      // Close dialog
-      setOpenDialogId(null);
-      // Optionally, still re-fetch in background
-      fetchAppointments();
-    } catch (error) {
-      console.error('Error updating status:', error);
+    } catch (error: any) {
       toast({
         title: "Update Failed",
         description: "There was an error updating the appointment status. Please try again.",
@@ -399,7 +401,6 @@ const Appointments = () => {
               ) : todaysAppointments.length === 0 ? (
                 <div className="text-center text-gray-500">No appointments for this date.</div>
               ) : todaysAppointments.map((appointment) => {
-                console.log('Appointment:', appointment.id, 'Status:', appointment.status);
                 return (
                   <div key={appointment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex items-center space-x-4">
