@@ -50,6 +50,14 @@ const getWhatsAppMessage = (appointment: any, clinicNumber = '60162235212') => {
   );
 };
 
+// Helper for status label
+function getStatusLabel(status: string) {
+  if (status === 'pending') return 'Pending';
+  if (status === 'confirmed') return 'Confirmed';
+  if (status === 'cancelled') return 'Cancelled';
+  return status;
+}
+
 const Appointments = () => {
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -137,17 +145,17 @@ const Appointments = () => {
 
       toast({
         title: "Status Updated!",
-        description: `Appointment status changed to ${status}`,
+        description: `Appointment status changed to ${getStatusLabel(status)}`,
         variant: "default",
       });
 
-      // Optionally, re-fetch after a longer delay
-      setTimeout(() => fetchAppointments(), 5000);
+      // Re-fetch after a 1.5 second delay
+      setTimeout(() => fetchAppointments(), 1500);
 
     } catch (error: any) {
       toast({
         title: "Update Failed",
-        description: "There was an error updating the appointment status. Please try again.",
+        description: error.message || "There was an error updating the appointment status. Please try again.",
         variant: "destructive",
       });
     }
