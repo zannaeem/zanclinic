@@ -62,6 +62,24 @@ function getStatusLabel(status: string) {
   return status;
 }
 
+  // WhatsApp message generator
+  function generateWhatsAppUrl(appointment: any) {
+    let phone = appointment.patient_phone || '60162235212';
+    phone = phone.replace(/\D/g, '');
+    if (!phone.startsWith('60')) {
+      if (phone.startsWith('0')) {
+        phone = '60' + phone.substring(1);
+      } else if (phone.length === 10 || phone.length === 11) {
+        phone = '60' + phone;
+      }
+    }
+    const dateStr = appointment.preferred_date || 'not specified';
+    const timeStr = appointment.preferred_time || 'not specified';
+    let message = `Hello ${appointment.patient_name || 'Patient'}, this is Klinik Subha. Your appointment for ${appointment.service_type || 'consultation'} has been ${appointment.status || 'scheduled'} for ${dateStr} ${timeStr}. Please contact us at +60162235212 if you have any questions.`;
+    message = encodeURIComponent(message);
+    return `https://wa.me/${phone}?text=${message}`;
+  }
+
 const Appointments = () => {
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -336,6 +354,17 @@ const Appointments = () => {
           <DialogFooter className="flex gap-2 mt-4">
             <Button disabled={updating || !selectedAppointment || selectedAppointment.status === 'confirmed'} variant="default" onClick={() => handleUpdateStatus(selectedAppointment.id, 'confirmed')}>Approve</Button>
             <Button disabled={updating || !selectedAppointment || selectedAppointment.status === 'cancelled'} variant="destructive" onClick={() => handleUpdateStatus(selectedAppointment.id, 'cancelled')}>Cancel</Button>
+            {selectedAppointment && selectedAppointment.patient_phone && (
+              <a
+                href={generateWhatsAppUrl(selectedAppointment)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                style={{ textDecoration: 'none' }}
+              >
+                <MessageSquare className="h-4 w-4 mr-2" /> WhatsApp
+              </a>
+            )}
             <Button variant="outline" onClick={() => setSelectedAppointment(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
