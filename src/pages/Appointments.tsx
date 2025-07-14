@@ -408,40 +408,6 @@ const Appointments = () => {
                       {appointment.status}
                     </Badge>
                     {appointment.status === 'pending' ? (
-                      <Button
-                        size="sm"
-                        className="bg-[#25D366] hover:bg-[#1ebe57] text-white p-2 rounded-full shadow-none border-none"
-                        asChild
-                      >
-                        <a
-                          href={`https://wa.me/${(appointment.patient_phone || appointment.phone || '').replace(/^0/, '60').replace(/[^\d]/g, '')}?text=${encodeURIComponent(getWhatsAppMessage(appointment) || '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Send WhatsApp Message"
-                          className="inline-flex items-center"
-                        >
-                          <WhatsAppIcon width={20} height={20} />
-                        </a>
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-gray-500 border-gray-300"
-                        asChild
-                        title="View WhatsApp Message"
-                      >
-                        <a
-                          href={`https://wa.me/${(appointment.patient_phone || appointment.phone || '').replace(/^0/, '60').replace(/[^\d]/g, '')}?text=${encodeURIComponent(getWhatsAppMessage(appointment) || '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center"
-                        >
-                          <Eye width={20} height={20} />
-                        </a>
-                      </Button>
-                    )}
-                    {appointment.status === 'pending' && (
                       <>
                         <Button size="sm" className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full" onClick={() => handleUpdateStatus(appointment.id, 'confirmed')} title="Confirm">
                           <Check className="h-4 w-4" />
@@ -450,6 +416,29 @@ const Appointments = () => {
                           <XIcon className="h-4 w-4" />
                         </Button>
                       </>
+                    ) : (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="outline" className="text-blue-600 border-blue-300" title="View Appointment Details">
+                            <Eye className="h-4 w-4 mr-1" /> View
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Appointment Details</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-2">
+                            <div><strong>Patient Name:</strong> {appointment.patient_name || appointment.patientName}</div>
+                            <div><strong>Phone:</strong> {appointment.patient_phone || appointment.phone}</div>
+                            <div><strong>IC:</strong> {appointment.patient_ic || appointment.patient_ic_email}</div>
+                            <div><strong>Service Type:</strong> {appointment.service_type || appointment.type}</div>
+                            <div><strong>Date:</strong> {appointment.preferred_date || appointment.date}</div>
+                            <div><strong>Time:</strong> {appointment.preferred_time || appointment.time}</div>
+                            <div><strong>Notes:</strong> {appointment.additional_notes}</div>
+                            <div><strong>Status:</strong> {appointment.status}</div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     )}
                   </div>
                 </div>
