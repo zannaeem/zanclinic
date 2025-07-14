@@ -120,7 +120,7 @@ const Appointments = () => {
         variant: "default",
       });
       // Update local state immediately with backend status value
-      setAppointments(prev => prev.map(appt => String(appt.id) === String(id) ? { ...appt, status } : appt));
+      setAppointments(prev => prev.map(appt => String(appt.id) === String(id) ? { ...appt, status: status === 'confirmed' ? 'confirmed' : status } : appt));
       // Debug: log the updated status
       setTimeout(() => {
         const updated = appointments.find(appt => appt.id === id);
